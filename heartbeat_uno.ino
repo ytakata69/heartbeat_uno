@@ -2,18 +2,32 @@
 // The ports 2 to 19 are for Digital I/O.
 // The ports 14 to 19 are also for Analog input.
 
+// Settings for Dotsduino:
+//   Board: Arduino Pro or Pro Mini
+//   Processor: ATmega328 (3.3V, 8MHz)
+// Dots::init12d() etc. in Dots.cpp describes the
+// Dotsduino pin assignment.
+
 // The output port for each row
 const byte rowPins[10] = {
-  2, 3, 4, 5,  6, 7, 8, 9
+//  2, 3, 4, 5,  6, 7, 8, 9 // Arduino UNO
+    2, 3, 4, 13,  14, 15, 16, 17 // Dotsduino 1.2d
 };
 // The output port for each column
 const byte colPins[8] = {
-  10, 11, 12, 13,  17, 16, 15, 14
+//  10, 11, 12, 13,  17, 16, 15, 14 // Arduino UNO
+    12, 11, 10, 9,  5, 6, 7, 8 // Dotsduino 1.2d
 };
-const boolean ROWS_ARE_ANODES = false;
+const boolean ROWS_ARE_ANODES = 
+//  false;  // Arduino UNO
+    true;   // Dotsduino 1.2d
+
 // Input pins
 const int volumePin = 4;  // Analog 4
 const int switchPin = 19; // Analog 5 = Digital 19
+const boolean USE_VOLUME =
+//  true;  // Arduino connected with a volume
+    false; // Dotsduino
 
 const int numOfRows = 8;
 const int numOfCols = 8;
@@ -136,7 +150,7 @@ void loop()
   digitalWrite(rowPins[row], ROWS_ARE_ANODES);
 
   // Change the brightness
-  if (digitalRead(switchPin)) {
+  if (! USE_VOLUME || digitalRead(switchPin)) {
     fadeDelayCount++;
     if (fadeDelayCount >= fadeDelay) {
       brightness = brightness + fadeAmount;
@@ -149,7 +163,7 @@ void loop()
     brightness = 256;
   }
 
-  int val = analogRead(volumePin);
+  int val = (USE_VOLUME ? analogRead(volumePin) : 1);
   for (i = 0; i < val; i++) {
     delayMicroseconds(50);
   }
