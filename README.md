@@ -1,6 +1,7 @@
 # heartbeat_uno
 
-<a href="https://www.youtube.com/watch?v=0SSXZ2yQ1As"><img src="http://img.youtube.com/vi/0SSXZ2yQ1As/0.jpg" width="120" alt="Demo movie of this program"></a>
+<a href="https://www.youtube.com/watch?v=0SSXZ2yQ1As"><img 
+   src="http://img.youtube.com/vi/0SSXZ2yQ1As/0.jpg" width="240" alt="Demo movie of this program"></a>
 
 A program for Arduino Uno for making
 analog output on an LED matrix.    
