@@ -5,6 +5,8 @@
 <a href="https://www.youtube.com/watch?v=8MxMoQuVOl8"><img
    src="https://img.youtube.com/vi/8MxMoQuVOl8/mqdefault.jpg" width="280" alt="Demo movie of this program on Dotsduino"></a>
 
+(Please see movies linked from the above images.)
+
 A program for Arduino Uno for making
 analog output on an LED matrix.    
 The code is in a mess...
