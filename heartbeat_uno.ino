@@ -32,43 +32,45 @@ const boolean USE_VOLUME =
 const int numOfRows = 8;
 const int numOfCols = 8;
 
-const byte shapeRegular[] = {
+const int N_SHAPE = 2;
+
+const byte shapeA[] = {
+  B00000001,
+  B00000011,
+  B00000111,
+  B00001111,
+  B00000111,
+  B00000011,
+  B00000001,
   B00000000,
-  B01100110,
-  B11111111,
-  B11111111,
-  B11111111,
-  B01111110,
-  B00111100,
-  B00011000,
-};
-const byte shapeTumble[] = {
-  B00111000,
-  B01111100,
-  B01111110,
-  B00111111,
-  B00111111,
-  B01111110,
-  B01111100,
-  B00111000,
 };
 
-const byte *shape = shapeRegular;
-//const byte *shape = shapeTumble;
+const byte shapeB[] = {
+  B00010000,
+  B00110000,
+  B01110000,
+  B11110000,
+  B01110000,
+  B00110000,
+  B00010000,
+  B00000000,
+};
+
+const byte *shape[] = { shapeA, shapeB };
+
 
 // The current lighting row. Only one row is lighting at every moment.
 int row;
 
 // Variables for controlling the brightness of LEDs
-int brightness = 0;
-int fadeAmount = 1;
+int brightnessCount = 0;
 int fadeDelayCount = 0;
 const int fadeDelay = 30;
 int valleyCount = 0;
 
 // accumulator for DSM
-int dsmAcc = 0;
-int dsmCarry = 0;
+int dsmAcc[N_SHAPE];
+int dsmCarry[N_SHAPE];
 const int dsmBits = 5;
 
 void setup()
@@ -102,9 +104,14 @@ void setup()
   }
 }
 
+inline int brightness(int t) {
+  t += 128;
+  return t < 512 ? t - 128 : 896 - t;
+}
+
 void loop()
 {
-  int i;
+  int i, j;
   uint8_t mask;
   
   // Write ROWS_ARE_ANODE to a rowPin and its complement to a colPin,
@@ -121,27 +128,34 @@ void loop()
 
   // Compute the carry bit per one frame.
   if (row == 0) {
-    // Shrink the range of brightness to 0..255.
-    int out = (brightness > 256 ? 256 :
-               brightness <   0 ?   0 : brightness);
-    // Use only 5 bits.
-    out = out >> (8 - dsmBits);
-    // The following code makes the DSM smoother.
-    if (out == 1) {
-      dsmAcc = (1 << dsmBits) / 2;
+    for (i = 0; i < N_SHAPE; i++) {
+      int b = brightness(brightnessCount - i * 256);
+
+      // Shrink the range of brightness to 0..255.
+      int out = (b > 256 ? 256 :
+                 b <   0 ?   0 : b);
+      // Use only 5 bits.
+      out = out >> (8 - dsmBits);
+      // The following code makes the DSM smoother.
+      if (out == 1) {
+        dsmAcc[i] = (1 << dsmBits) / 2;
+      }
+      // Accumulate the value and obtain the carry.
+      dsmAcc[i] += out;
+      dsmCarry[i] = dsmAcc[i] & (1 << dsmBits);
+      dsmAcc[i] &= (1 << dsmBits) - 1;
     }
-    // Accumulate the value and obtain the carry.
-    dsmAcc += out;
-    dsmCarry = dsmAcc & (1 << dsmBits);
-    dsmAcc &= (1 << dsmBits) - 1;
   }
 
   // Set the brightness of each column.
   mask = 0x80;
   for (i = 0; i < numOfCols; i++) {
     int out = ROWS_ARE_ANODES;
-    if (shape[row] & mask) {
-      out = (dsmCarry ? ! out : out);
+    for (j = 0; j < N_SHAPE; j++) {
+      if (shape[j][row] & mask) {
+        out = (dsmCarry[j] ? ! out : out);
+        break;
+      }
     }
     digitalWrite(colPins[i], out);
     mask >>= 1;
@@ -154,15 +168,15 @@ void loop()
   if (! USE_VOLUME || digitalRead(switchPin)) {
     fadeDelayCount++;
     if (fadeDelayCount >= fadeDelay) {
-      brightness = brightness + fadeAmount;
-      if (brightness == -128 || brightness == 256 + 128) {
-        fadeAmount = -fadeAmount;
-        if (brightness == -128) valleyCount++;
+      brightnessCount++;
+      if (brightnessCount >= 1024 + 256) {
+        brightnessCount = 0;
+        valleyCount++;
       }
       fadeDelayCount = 0;
     }
   } else {
-    brightness = 256;
+    brightnessCount = 512;
   }
 
   int val = (USE_VOLUME ? analogRead(volumePin) : 1);
