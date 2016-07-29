@@ -17,6 +17,7 @@ const byte rowPins[10] = {
 const byte colPins[8] = {
 //  10, 11, 12, 13,  17, 16, 15, 14 // Arduino UNO
     12, 11, 10, 9,  5, 6, 7, 8 // Dotsduino 1.2d
+//  8, 7, 6, 5,  9, 10, 11, 12 // Dotsduino 1.2d flipped
 };
 const boolean ROWS_ARE_ANODES = 
 //  false;  // Arduino UNO
@@ -35,6 +36,7 @@ const int numOfCols = 8;
 const int N_SHAPE = 2;
 
 const byte shapeA[] = {
+  B00000000,
   B00000001,
   B00000011,
   B00000111,
@@ -42,7 +44,6 @@ const byte shapeA[] = {
   B00000111,
   B00000011,
   B00000001,
-  B00000000,
 };
 
 const byte shapeB[] = {
@@ -58,6 +59,29 @@ const byte shapeB[] = {
 
 const byte *shape[] = { shapeA, shapeB };
 
+const byte shapeH[] = {
+  B00000000,
+  B01100110,
+  B11111111,
+  B11111111,
+  B11111111,
+  B01111110,
+  B00111100,
+  B00011000,
+};
+
+const byte shapeO[] = {
+  B01111110,
+  B10000001,
+  B10100101,
+  B10000001,
+  B10011101,
+  B10000001,
+  B01111110,
+  B00000000,
+};
+
+const byte *shapeHO[] = { shapeH, shapeO };
 
 // The current lighting row. Only one row is lighting at every moment.
 int row;
@@ -151,11 +175,17 @@ void loop()
   mask = 0x80;
   for (i = 0; i < numOfCols; i++) {
     int out = ROWS_ARE_ANODES;
-    for (j = 0; j < N_SHAPE; j++) {
-      if (shape[j][row] & mask) {
-        out = (dsmCarry[j] ? ! out : out);
-        break;
+    if (valleyCount < 3) {
+      for (j = 0; j < N_SHAPE; j++) {
+        if (shape[j][row] & mask) {
+          out = (dsmCarry[j] ? ! out : out);
+          break;
+        }
       }
+    } else {
+        if (shapeHO[valleyCount - 3][row] & mask) {
+          out = (dsmCarry[0] ? ! out : out);
+        }
     }
     digitalWrite(colPins[i], out);
     mask >>= 1;
@@ -169,7 +199,7 @@ void loop()
     fadeDelayCount++;
     if (fadeDelayCount >= fadeDelay) {
       brightnessCount++;
-      if (brightnessCount >= 1024 + 256) {
+      if (brightnessCount >= 1024 + (valleyCount < 3 ? 256 : 0)) {
         brightnessCount = 0;
         valleyCount++;
       }
@@ -184,7 +214,7 @@ void loop()
     delayMicroseconds(50);
   }
 
-  if (valleyCount >= 3) {
+  if (valleyCount >= 5) {
     valleyCount = 0;
     delay(4000);
   }
