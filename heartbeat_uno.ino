@@ -64,6 +64,7 @@ int brightness = 0;
 int fadeAmount = 1;
 int fadeDelayCount = 0;
 const int fadeDelay = 30;
+int valleyCount = 0;
 
 // accumulator for DSM
 int dsmAcc = 0;
@@ -156,6 +157,7 @@ void loop()
       brightness = brightness + fadeAmount;
       if (brightness == -128 || brightness == 256 + 128) {
         fadeAmount = -fadeAmount;
+        if (brightness == -128) valleyCount++;
       }
       fadeDelayCount = 0;
     }
@@ -166,6 +168,11 @@ void loop()
   int val = (USE_VOLUME ? analogRead(volumePin) : 1);
   for (i = 0; i < val; i++) {
     delayMicroseconds(50);
+  }
+
+  if (valleyCount >= 3) {
+    valleyCount = 0;
+    delay(4000);
   }
 }
 
