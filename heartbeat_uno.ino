@@ -27,7 +27,10 @@ const boolean ROWS_ARE_ANODES =
 const int volumePin = 4;  // Analog 4
 const int switchPin = 19; // Analog 5 = Digital 19
 const boolean USE_VOLUME =
-//  true;  // Arduino connected with a volume
+    true;  // Arduino connected with a volume
+//  false; // Dotsduino
+const boolean USE_SWITCH =
+//  true;  // Arduino connected with a slide switch
     false; // Dotsduino
 
 const int numOfRows = 8;
@@ -86,10 +89,14 @@ const byte *shapeHO[] = { shapeH, shapeO };
 // The current lighting row. Only one row is lighting at every moment.
 int row;
 
+// Variable for defining the waiting time for each row.
+// This can be changed with the volume (if USE_VOLUME is true).
+int waitCount = 0;
+
 // Variables for controlling the brightness of LEDs
 int brightnessCount = 0;
 int fadeDelayCount = 0;
-const int fadeDelay = 30;
+const int fadeDelay = 4;
 int valleyCount = 0;
 
 // accumulator for DSM
@@ -150,8 +157,14 @@ void loop()
     row = 0;
   }
 
-  // Compute the carry bit per one frame.
+  // Tasks for each vertical sync.
   if (row == 0) {
+
+    // Read the volume value when the lights are off,
+    // because analogRead takes a long time.
+    if (USE_VOLUME) waitCount = analogRead(volumePin);
+
+    // Compute the carry bit per one frame.
     for (i = 0; i < N_SHAPE; i++) {
       int b = brightness(brightnessCount - i * 256);
 
@@ -169,6 +182,22 @@ void loop()
       dsmCarry[i] = dsmAcc[i] & (1 << dsmBits);
       dsmAcc[i] &= (1 << dsmBits) - 1;
     }
+
+    // Change the brightness
+    if (! USE_SWITCH || digitalRead(switchPin)) {
+      fadeDelayCount++;
+      if (fadeDelayCount >= fadeDelay) {
+        brightnessCount++;
+        if (brightnessCount >= 1024 + (valleyCount < 3 ? 256 : 0)) {
+          brightnessCount = 0;
+          valleyCount++;
+        }
+        fadeDelayCount = 0;
+      }
+    } else {
+      brightnessCount = 512;
+    }
+
   }
 
   // Set the brightness of each column.
@@ -194,26 +223,12 @@ void loop()
   // Light the row.
   digitalWrite(rowPins[row], ROWS_ARE_ANODES);
 
-  // Change the brightness
-  if (! USE_VOLUME || digitalRead(switchPin)) {
-    fadeDelayCount++;
-    if (fadeDelayCount >= fadeDelay) {
-      brightnessCount++;
-      if (brightnessCount >= 1024 + (valleyCount < 3 ? 256 : 0)) {
-        brightnessCount = 0;
-        valleyCount++;
-      }
-      fadeDelayCount = 0;
-    }
-  } else {
-    brightnessCount = 512;
-  }
-
-  int val = (USE_VOLUME ? analogRead(volumePin) : 1);
-  for (i = 0; i < val; i++) {
+  // Take a wait for each row.
+  for (i = 0; i <= waitCount; i++) {
     delayMicroseconds(50);
   }
 
+  // Take a long wait intermittently.
   if (valleyCount >= 5) {
     valleyCount = 0;
     delay(4000);
