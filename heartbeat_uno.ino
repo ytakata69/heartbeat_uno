@@ -51,10 +51,10 @@ int fadeAmount = 1;
 int fadeDelayCount = 0;
 const int fadeDelay = 30;
 
-// accumulator for DSM
-int dsmAcc = 0;
-int dsmCarry = 0;
-const int dsmBits = 5;
+// accumulator for software PWM
+int pwmAcc = 0;
+int pwmCarry = 0;
+const int pwmBits = 5;
 
 void setup()
 {
@@ -110,15 +110,15 @@ void loop()
     int out = (brightness > 256 ? 256 :
                brightness <   0 ?   0 : brightness);
     // Use only 5 bits.
-    out = out >> (8 - dsmBits);
-    // The following code makes the DSM smoother.
+    out = out >> (8 - pwmBits);
+    // The following code makes the PWM smoother.
     if (out == 1) {
-      dsmAcc = (1 << dsmBits) / 2;
+      pwmAcc = (1 << pwmBits) / 2;
     }
     // Accumulate the value and obtain the carry.
-    dsmAcc += out;
-    dsmCarry = dsmAcc & (1 << dsmBits);
-    dsmAcc &= (1 << dsmBits) - 1;
+    pwmAcc += out;
+    pwmCarry = pwmAcc & (1 << pwmBits);
+    pwmAcc &= (1 << pwmBits) - 1;
   }
 
   // Set the brightness of each column.
@@ -126,7 +126,7 @@ void loop()
   for (i = 0; i < numOfCols; i++) {
     int out = ROWS_ARE_ANODES;
     if (shape[row] & mask) {
-      out = (dsmCarry ? ! out : out);
+      out = (pwmCarry ? ! out : out);
     }
     digitalWrite(colPins[i], out);
     mask >>= 1;
