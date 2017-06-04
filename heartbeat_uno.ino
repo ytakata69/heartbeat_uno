@@ -99,10 +99,10 @@ int fadeDelayCount = 0;
 const int fadeDelay = 4;
 int valleyCount = 0;
 
-// accumulator for DSM
-int dsmAcc[N_SHAPE];
-int dsmCarry[N_SHAPE];
-const int dsmBits = 5;
+// accumulator for software PWM
+int pwmAcc[N_SHAPE];
+int pwmCarry[N_SHAPE];
+const int pwmBits = 5;
 
 void setup()
 {
@@ -172,15 +172,15 @@ void loop()
       int out = (b > 256 ? 256 :
                  b <   0 ?   0 : b);
       // Use only 5 bits.
-      out = out >> (8 - dsmBits);
-      // The following code makes the DSM smoother.
+      out = out >> (8 - pwmBits);
+      // The following code makes the PWM smoother.
       if (out == 1) {
-        dsmAcc[i] = (1 << dsmBits) / 2;
+        pwmAcc[i] = (1 << pwmBits) / 2;
       }
       // Accumulate the value and obtain the carry.
-      dsmAcc[i] += out;
-      dsmCarry[i] = dsmAcc[i] & (1 << dsmBits);
-      dsmAcc[i] &= (1 << dsmBits) - 1;
+      pwmAcc[i] += out;
+      pwmCarry[i] = pwmAcc[i] & (1 << pwmBits);
+      pwmAcc[i] &= (1 << pwmBits) - 1;
     }
 
     // Change the brightness
@@ -207,13 +207,13 @@ void loop()
     if (valleyCount < 3) {
       for (j = 0; j < N_SHAPE; j++) {
         if (shape[j][row] & mask) {
-          out = (dsmCarry[j] ? ! out : out);
+          out = (pwmCarry[j] ? ! out : out);
           break;
         }
       }
     } else {
         if (shapeHO[valleyCount - 3][row] & mask) {
-          out = (dsmCarry[0] ? ! out : out);
+          out = (pwmCarry[0] ? ! out : out);
         }
     }
     digitalWrite(colPins[i], out);
