@@ -1,11 +1,10 @@
 # heartbeat_uno
 
 <a href="https://www.youtube.com/watch?v=0SSXZ2yQ1As"><img 
-   src="http://img.youtube.com/vi/0SSXZ2yQ1As/mqdefault.jpg" width="280" alt="Demo movie of this program"></a>
+   src="https://raw.github.com/wiki/ytakata69/heartbeat_uno/uno.jpg" width="280" alt="Demo movie of this program"></a>
 <a href="https://www.youtube.com/watch?v=8MxMoQuVOl8"><img
-   src="https://img.youtube.com/vi/8MxMoQuVOl8/mqdefault.jpg" width="280" alt="Demo movie of this program on Dotsduino"></a>
+   src="https://raw.github.com/wiki/ytakata69/heartbeat_uno/dots.jpg" width="280" alt="Demo movie of this program on Dotsduino"></a>
 
-(Please see movies linked from the above images.)
 
 A program for Arduino Uno for making
 analog output on an LED matrix.    
